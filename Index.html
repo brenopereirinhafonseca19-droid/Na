@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafio Drauzio Varella</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  color: white;
+  background: linear-gradient(135deg, #07111f, #123c42, #07111f);
+}
+
+.game {
+  width: 100%;
+  max-width: 500px;
+  padding: 25px;
+  border-radius: 20px;
+  background: #152438;
+  border: 1px solid #2e5260;
+  box-shadow: 0 0 30px #0008;
+}
+
+h1 { color: #4fffc1; }
+.subtitle { color: #b6c7d6; }
+
+.progress {
+  height: 8px;
+  background: #35465a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 15px 0 25px;
+}
+
+#bar {
+  height: 100%;
+  width: 0;
+  background: #4fffc1;
+  transition: width .3s;
+}
+
+#question {
+  font-size: 21px;
+  line-height: 1.5;
+  min-height: 110px;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.true { background: #16865d; color: white; }
+.false { background: #c0394b; color: white; }
+.next { background: #4fffc1; color: #07111f; }
+
+button:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+#feedback {
+  margin-top: 18px;
+  line-height: 1.6;
+  padding: 12px;
+  background: #24364c;
+  border-radius: 10px;
+}
+
+.hidden { display: none; }
+
+.small {
+  color: #b6c7d6;
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+<div class="game" id="game">
+
+  <div id="quiz">
+    <h1>🧠 Verdadeiro ou Falso</h1>
+    <p class="subtitle">DESAFIO AVANÇADO: DRAUZIO VARELLA</p>
+
+    <p id="counter">Pergunta 1 de 10</p>
+    <div class="progress"><div id="bar"></div></div>
+
+    <h2 id="question"></h2>
+
+    <button class="true" id="trueBtn"
+      onclick="answer(true)">VERDADEIRO</button>
+
+    <button class="false" id="falseBtn"
+      onclick="answer(false)">FALSO</button>
+
+    <div id="feedback" class="hidden"></div>
+
+    <button class="next hidden" id="nextBtn"
+      onclick="nextQuestion()">Próxima pergunta →</button>
+
+    <p id="score" class="small">Pontuação: 0</p>
+  </div>
+
+  <div id="result" class="hidden">
+    <h1>🏆 Resultado final</h1>
+    <h2 id="finalScore"></h2>
+    <p id="message"></p>
+    <button class="next" onclick="restart()">JOGAR NOVAMENTE</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    q: "Drauzio Varella formou-se em Medicina pela USP em 1967, após ingressar na faculdade em 1962.",
+    a: true,
+    e: "Verdadeiro! Ele ingressou na Faculdade de Medicina da USP em 1962 e se formou em 1967."
+  },
+  {
+    q: "O trabalho de Drauzio Varella no Carandiru começou em 1989, inicialmente ligado à prevenção da AIDS entre os presos.",
+    a: true,
+    e: "Verdadeiro! O trabalho começou com pesquisa sobre HIV e ações de esclarecimento e prevenção."
+  },
+  {
+    q: "O livro Estação Carandiru foi publicado antes do início do trabalho voluntário do médico na prisão.",
+    a: false,
+    e: "Falso! O trabalho começou em 1989, e o livro foi publicado em 1999."
+  },
+  {
+    q: "Drauzio Varella trabalhou durante cerca de vinte anos no Serviço de Imunologia do Hospital do Câncer.",
+    a: true,
+    e: "Verdadeiro! Ele dirigiu esse serviço por mais de vinte anos, segundo sua biografia."
+  },
+  {
+    q: "A experiência no Carandiru originou apenas um livro, sem outras obras relacionadas ao sistema prisional.",
+    a: false,
+    e: "Falso! Entre as obras relacionadas às experiências prisionais estão Estação Carandiru, Carcereiros e Prisioneiras."
+  },
+  {
+    q: "Drauzio Varella começou a divulgar informações sobre AIDS exclusivamente pela televisão, sem atuar no rádio.",
+    a: false,
+    e: "Falso! Ele participou de campanhas de esclarecimento no rádio antes de ganhar maior espaço na televisão."
+  },
+  {
+    q: "Estação Carandiru recebeu o Prêmio Jabuti de Livro do Ano em 2000 e foi adaptado para o cinema em 2003.",
+    a: true,
+    e: "Verdadeiro! O livro recebeu o prêmio e a adaptação cinematográfica foi dirigida por Hector Babenco."
+  },
+  {
+    q: "A pesquisa de Drauzio Varella na região do baixo Rio Negro busca investigar o potencial de plantas brasileiras para o desenvolvimento de medicamentos.",
+    a: true,
+    e: "Verdadeiro! O projeto estuda extratos vegetais e seu potencial farmacológico."
+  },
+  {
+    q: "Drauzio Varella completou sua primeira maratona antes de completar 40 anos.",
+    a: false,
+    e: "Falso! Ele decidiu correr uma maratona perto dos 50 anos e completou a primeira antes de fazer 51."
+  },
+  {
+    q: "A atuação de Drauzio Varella se limita à oncologia, sem participação em ações de comunicação pública sobre saúde.",
+    a: false,
+    e: "Falso! Além da medicina, ele se tornou conhecido por divulgar informações de saúde no rádio, na televisão, na imprensa e na internet."
+  }
+];
+
+let index = 0;
+let points = 0;
+let locked = false;
+
+function showQuestion() {
+  locked = false;
+
+  document.getElementById("counter").textContent =
+    `Pergunta ${index + 1} de ${questions.length}`;
+
+  document.getElementById("bar").style.width =
+    `${index / questions.length * 100}%`;
+
+  document.getElementById("question").textContent =
+    questions[index].q;
+
+  document.getElementById("feedback").classList.add("hidden");
+  document.getElementById("nextBtn").classList.add("hidden");
+
+  document.getElementById("trueBtn").disabled = false;
+  document.getElementById("falseBtn").disabled = false;
+
+  document.getElementById("score").textContent =
+    `Pontuação: ${points}`;
+}
+
+function answer(choice) {
+  if (locked) return;
+  locked = true;
+
+  const item = questions[index];
+  const correct = choice === item.a;
+
+  if (correct) points++;
+
+  document.getElementById("trueBtn").disabled = true;
+  document.getElementById("falseBtn").disabled = true;
+
+  document.getElementById("bar").style.width =
+    `${(index + 1) / questions.length * 100}%`;
+
+  const feedback = document.getElementById("feedback");
+  feedback.innerHTML =
+    `<strong>${correct ? "✅ Resposta correta!" : "❌ Resposta incorreta!"}</strong><br>${item.e}`;
+  feedback.classList.remove("hidden");
+
+  document.getElementById("score").textContent =
+    `Pontuação: ${points}`;
+
+  document.getElementById("nextBtn").textContent =
+    index === questions.length - 1
+      ? "Ver resultado 🏆"
+      : "Próxima pergunta →";
+
+  document.getElementById("nextBtn").classList.remove("hidden");
+}
+
+function nextQuestion() {
+  index++;
+
+  if (index < questions.length) {
+    showQuestion();
+  } else {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+
+    document.getElementById("finalScore").textContent =
+      `${points} / ${questions.length} pontos`;
+
+    let message;
+
+    if (points === 10) {
+      message = "PERFEITO! Você acertou todas as perguntas! 🏆";
+    } else if (points >= 8) {
+      message = "Excelente! Você conhece muito bem a trajetória dele.";
+    } else if (points >= 5) {
+      message = "Bom resultado! Você pode melhorar ainda mais.";
+    } else {
+      message = "Desafio difícil! Estude as explicações e tente novamente.";
+    }
+
+    document.getElementById("message").textContent = message;
+  }
+}
+
+function restart() {
+  index = 0;
+  points = 0;
+
+  document.getElementById("quiz").classList.remove("hidden");
+  document.getElementById("result").classList.add("hidden");
+
+  showQuestion();
+}
+
+showQuestion();
+</script>
+</body>
+</html>
